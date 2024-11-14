@@ -22,9 +22,9 @@ type Handler[Request, Response any] interface {
 
 	OnError(func(context.Context, error)) Handler[Request, Response]
 
-	Monitor(func(context.Context)) Handler[Request, Response]
+	Monitor(func(context.Context, Request, error)) Handler[Request, Response]
 
-	Audit(func(context.Context)) Handler[Request, Response]
+	Audit(func(context.Context, Request, error)) Handler[Request, Response]
 }
 
 type handler[Request, Response any] struct {
@@ -50,11 +50,11 @@ func (h *handler[Request, Response]) OnError(f func(context.Context, error)) Han
 
 }
 
-func (h *handler[Request, Response]) Monitor(f func(context.Context)) Handler[Request, Response] {
+func (h *handler[Request, Response]) Monitor(f func(context.Context, Request, error)) Handler[Request, Response] {
 
 }
 
-func (h *handler[Request, Response]) Audit(f func(context.Context)) Handler[Request, Response] {
+func (h *handler[Request, Response]) Audit(f func(context.Context, Request, error)) Handler[Request, Response] {
 
 }
 
