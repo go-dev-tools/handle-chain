@@ -12,49 +12,70 @@ func New[Request, Response any]() Handler[Request, Response] {
 type Handler[Request, Response any] interface {
 	http.Handler
 
-	Parse(func(*http.Request) (Request, error)) Handler[Request, Response]
+	Parse(ParseRequestFunc[Request]) Handler[Request, Response]
 
-	AuthZ(func(context.Context, Request) error) Handler[Request, Response]
+	AuthZ(AuthorizeFunc[Request]) Handler[Request, Response]
 
-	Resolve(func(context.Context, Request) (Response, error)) Handler[Request, Response]
+	Resolve(ResolveRequestFunc[Request, Response]) Handler[Request, Response]
 
-	OnSuccess(func(context.Context, Response)) Handler[Request, Response]
+	OnSuccess(OnSuccessFunc[Response]) Handler[Request, Response]
 
-	OnError(func(context.Context, error)) Handler[Request, Response]
+	OnError(OnErrorFunc) Handler[Request, Response]
 
-	Monitor(func(context.Context, Request, error)) Handler[Request, Response]
+	Monitor(CollectMetricFunc[Request]) Handler[Request, Response]
 
-	Audit(func(context.Context, Request, error)) Handler[Request, Response]
+	Audit(AuditLogFunc[Request]) Handler[Request, Response]
 }
+
+type ParsedRequest[Request any] struct {
+	Body        Request
+	Headers     map[string]string
+	PathParams  map[string]string
+	QueryParams map[string]string
+}
+
+type ParseRequestFunc [Request any] func (http.Request) (ParsedRequest[Request], error)
+
+type AuthorizeFunc [Request any] func (context.Context, ParsedRequest[Request]) error
+
+type ResolveRequestFunc [Request, Response any] func (context.Context, ParsedRequest[Request]) (Response, error)
+
+type OnSuccessFunc [Response any] func (context.Context, Response)
+
+type OnErrorFunc func (context.Context, error)
+
+type CollectMetricFunc [Request any] func (context.Context, ParsedRequest[Request], error)
+
+type AuditLogFunc [Request any] func (context.Context, ParsedRequest[Request], error)
 
 type handler[Request, Response any] struct {
 }
 
-func (h *handler[Request, Response]) Parse(f func(*http.Request) (Request, error)) Handler[Request, Response] {
+func (h *handler[Request, Response]) Parse(f ParseRequestFunc[Request]) Handler[Request, Response] {
 
 }
 
-func (h *handler[Request, Response]) AuthZ(f func(context.Context, Request) error) Handler[Request, Response] {
+func (h *handler[Request, Response]) AuthZ(f AuthorizeFunc[Request]) Handler[Request, Response] {
 
 }
 
-func (h *handler[Request, Response]) Resolve(f func(context.Context, Request) (Response, error)) Handler[Request, Response] {
+func (h *handler[Request, Response]) Resolve(f ResolveRequestFunc[Request, Response]) Handler[Request, Response] {
 
 }
 
-func (h *handler[Request, Response]) OnSuccess(f func(context.Context, Response)) Handler[Request, Response] {
+func (h *handler[Request, Response]) OnSuccess(f OnSuccessFunc[Response]) Handler[Request, Response] {
 
 }
 
-func (h *handler[Request, Response]) OnError(f func(context.Context, error)) Handler[Request, Response] {
+func (h *handler[Request, Response]) OnError(f OnErrorFunc) Handler[Request, Response] {
 
 }
 
-func (h *handler[Request, Response]) Monitor(f func(context.Context, Request, error)) Handler[Request, Response] {
+func (h *handler[Request, Response]) Monitor(f CollectMetricFunc[Request]) Handler[Request, Response] {
 
 }
 
-func (h *handler[Request, Response]) Audit(f func(context.Context, Request, error)) Handler[Request, Response] {
+func (h *handler[Request, Response]) Audit(f AuditLogFunc[Request]) Handler[Request, Response] {
 
 }
 
