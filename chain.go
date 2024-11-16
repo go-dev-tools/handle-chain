@@ -27,6 +27,9 @@ type Handler[Request, Response any] interface {
 	Audit(AuditLogFunc[Request]) Handler[Request, Response]
 }
 
+type EmptyRequest any
+type EmptyResponse any
+
 type ParsedRequest[Request any] struct {
 	Body        Request
 	Headers     map[string]string
@@ -34,15 +37,15 @@ type ParsedRequest[Request any] struct {
 	QueryParams map[string]string
 }
 
-type ParseRequestFunc [Request any] func (http.Request) (ParsedRequest[Request], error)
+type ParseRequestFunc [Request any] func (*http.Request) (ParsedRequest[Request], error)
 
 type AuthorizeFunc [Request any] func (context.Context, ParsedRequest[Request]) error
 
 type ResolveRequestFunc [Request, Response any] func (context.Context, ParsedRequest[Request]) (Response, error)
 
-type OnSuccessFunc [Response any] func (context.Context, Response)
+type OnSuccessFunc [Response any] func (context.Context, http.ResponseWriter, Response)
 
-type OnErrorFunc func (context.Context, error)
+type OnErrorFunc func (context.Context, http.ResponseWriter, error)
 
 type CollectMetricFunc [Request any] func (context.Context, ParsedRequest[Request], error)
 
