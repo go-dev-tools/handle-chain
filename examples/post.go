@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-dev-tools/handle-chain"
+	chain "github.com/go-dev-tools/handle-chain"
 )
 
-func RegisterRoutes() {
+func init() {
 
 	// Create book
 	http.Handle("/books", chain.New[Book, chain.EmptyResponse]().
@@ -38,11 +38,11 @@ func AllowBookWrite(context.Context, chain.ParsedRequest[Book]) error {
 
 }
 
-func InsertBook(context.Context, chain.ParsedRequest[Book]) (chain.EmptyResponse, error) {
+func InsertBook(context.Context, chain.ParsedRequest[Book]) (chain.SuccessResponse[chain.EmptyResponse], error) {
 
 }
 
-func OnBookInserted(context.Context, http.ResponseWriter, chain.EmptyResponse){
+func OnBookInserted(context.Context, http.ResponseWriter, chain.SuccessResponse[chain.EmptyResponse]) {
 
 }
 
@@ -50,7 +50,7 @@ func OnFailedToInsertBook(context.Context, http.ResponseWriter, error) {
 
 }
 
-func MonitorBookInsertion(context.Context, chain.ParsedRequest[Book], error){
+func MonitorBookInsertion(context.Context, chain.ParsedRequest[Book], error) {
 
 }
 

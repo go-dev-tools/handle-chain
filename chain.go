@@ -5,10 +5,23 @@ import (
 	"net/http"
 )
 
+// New creates an instance of Handler.
+// Requires the Request and Response types to be defined for the Handler.
+// For empty request body in the case of GET method use EmptyRequest as the Request type.
+// For empty response body in the case of POST, PUT, PATCH and DELETE methods use EmptyResponse as the Response type.
 func New[Request, Response any]() Handler[Request, Response] {
 	return &handler[Request, Response]{}
 }
 
+// Handler composes http.Handler and can be used with any http router.
+//
+// The order of execution is:
+// ParseRequestFunc -> AuthorizeFunc -> ResolveRequestFunc
+//
+// OnSuccessFunc is called when ResolveRequestFunc doesn't return an error.
+// OnErrorFunc is called when ResolveRequestFunc returns an error.
+//
+// CollectMetricFunc and AuditLogFunc get called whether or not an error occurs.
 type Handler[Request, Response any] interface {
 	http.Handler
 
@@ -32,18 +45,24 @@ type EmptyResponse any
 
 type ParsedRequest[Request any] struct {
 	Body        Request
-	Headers     map[string]string
+	Headers     http.Header
 	PathParams  map[string]string
 	QueryParams map[string]string
+}
+
+type SuccessResponse[Response any] struct {
+	HttpStatusCode int
+	Body           Response
+	Headers        http.Header
 }
 
 type ParseRequestFunc[Request any] func(*http.Request) (ParsedRequest[Request], error)
 
 type AuthorizeFunc[Request any] func(context.Context, ParsedRequest[Request]) error
 
-type ResolveRequestFunc[Request, Response any] func(context.Context, ParsedRequest[Request]) (Response, error)
+type ResolveRequestFunc[Request, Response any] func(context.Context, ParsedRequest[Request]) (SuccessResponse[Response], error)
 
-type OnSuccessFunc[Response any] func(context.Context, http.ResponseWriter, Response)
+type OnSuccessFunc[Response any] func(context.Context, http.ResponseWriter, SuccessResponse[Response])
 
 type OnErrorFunc func(context.Context, http.ResponseWriter, error)
 
@@ -97,33 +116,63 @@ func (h *handler[Request, Response]) Audit(f AuditLogFunc[Request]) Handler[Requ
 }
 
 func (h *handler[Request, Response]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-	
-  req, err := h.parseReqF(r)
-  if err != nil {
-	h.handleError(ctx, w, req, err)
-    return
-  }
+	ctx := r.Context()
 
-  err = h.authF(ctx, req)
-  if err != nil {
-    h.handleError(ctx, w, req, err)
-	return
-  }
+	var req ParsedRequest[Request]
+	var err error
 
-  resp, err := h.resolveF(ctx, req)
-  if err != nil {
-	h.handleError(ctx, w, req, err)
-	return
-  }
+	// Parse the request
+	if h.parseReqF != nil {
+		req, err = h.parseReqF(r)
+		if err != nil {
+			h.handleError(ctx, w, req, err)
+			return
+		}
+	}
 
-  h.onSuccessF(ctx, w, resp)
-  h.metricF(ctx, req, err)
-  h.auditF(ctx, req, err)
+	// Authorize the request
+	if h.authF != nil {
+		err = h.authF(ctx, req)
+		if err != nil {
+			h.handleError(ctx, w, req, err)
+			return
+		}
+	}
+
+	var resp SuccessResponse[Response]
+
+	// Resolve the request and get the response
+	if h.resolveF != nil {
+		resp, err = h.resolveF(ctx, req)
+		if err != nil {
+			h.handleError(ctx, w, req, err)
+			return
+		}
+	}
+
+	// Send the success response
+	if h.onSuccessF != nil {
+		h.onSuccessF(ctx, w, resp)
+	}
+
+	h.postProcess(ctx, req, err)
 }
 
 func (h *handler[Request, Response]) handleError(ctx context.Context, w http.ResponseWriter, req ParsedRequest[Request], err error) {
-	h.onErrorF(ctx, w,err)
-	h.metricF(ctx,req, err)
-	h.auditF(ctx, req, err)
+	// Send the error response
+	if h.onErrorF != nil {
+		h.onErrorF(ctx, w, err)
+	}
+
+	h.postProcess(ctx, req, err)
+}
+
+func (h *handler[Request, Response]) postProcess(ctx context.Context, req ParsedRequest[Request], err error) {
+	if h.metricF != nil {
+		h.metricF(ctx, req, err)
+	}
+
+	if h.auditF != nil {
+		h.auditF(ctx, req, err)
+	}
 }
