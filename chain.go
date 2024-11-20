@@ -19,7 +19,7 @@ func New[Request, Response any]() Handler[Request, Response] {
 // ParseRequestFunc -> AuthorizeFunc -> ResolveRequestFunc
 //
 // OnSuccessFunc is called when ResolveRequestFunc doesn't return an error.
-// OnErrorFunc is called when ResolveRequestFunc returns an error.
+// OnErrorFunc is called when any error occurs.
 //
 // CollectMetricFunc and AuditLogFunc get called whether or not an error occurs.
 type Handler[Request, Response any] interface {
