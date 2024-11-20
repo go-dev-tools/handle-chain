@@ -14,11 +14,11 @@ func init() {
 	http.Handle("/books", chain.New[Book, chain.EmptyResponse]().
 		Parse(ReadCreateBookRequest).
 		AuthZ(AllowBookWrite).
-		Resolve(InsertBook).
-		OnSuccess(OnBookInserted).
-		OnError(OnFailedToInsertBook).
-		Monitor(MonitorBookInsertion).
-		Audit(AuditBookInsertion))
+		Resolve(CreateBook).
+		OnSuccess(OnBookCreated).
+		OnError(OnFailedToCreateBook).
+		Monitor(MonitorBookCreation).
+		Audit(AuditBookCreation))
 }
 
 type Book struct {
@@ -38,22 +38,22 @@ func AllowBookWrite(context.Context, chain.ParsedRequest[Book]) error {
 
 }
 
-func InsertBook(context.Context, chain.ParsedRequest[Book]) (chain.SuccessResponse[chain.EmptyResponse], error) {
+func CreateBook(context.Context, chain.ParsedRequest[Book]) (chain.SuccessResponse[chain.EmptyResponse], error) {
 
 }
 
-func OnBookInserted(context.Context, http.ResponseWriter, chain.SuccessResponse[chain.EmptyResponse]) {
+func OnBookCreated(context.Context, http.ResponseWriter, chain.SuccessResponse[chain.EmptyResponse]) {
 
 }
 
-func OnFailedToInsertBook(context.Context, http.ResponseWriter, error) {
+func OnFailedToCreateBook(context.Context, http.ResponseWriter, error) {
 
 }
 
-func MonitorBookInsertion(context.Context, chain.ParsedRequest[Book], error) {
+func MonitorBookCreation(context.Context, chain.ParsedRequest[Book], error) {
 
 }
 
-func AuditBookInsertion(context.Context, chain.ParsedRequest[Book], error) {
+func AuditBookCreation(context.Context, chain.ParsedRequest[Book], error) {
 
 }

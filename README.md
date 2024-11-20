@@ -16,14 +16,13 @@ func () {
 
 // Create Book Endpoint
 http.Handle("/books", chain.New[Book, chain.EmptyResponse]().
-		Parse(ReadCreateBookRequest).
-		AuthZ(AllowBookWrite).
-		Resolve(InsertBook).
-		OnSuccess(OnBookInserted).
-		OnError(OnFailedToInsertBook).
-		Monitor(MonitorBookInsertion).
-		Audit(AuditBookInsertion))
-
+    Parse(ReadCreateBookRequest).
+    AuthZ(AllowBookWrite).
+    Resolve(CreateBook).
+    OnSuccess(OnBookCreated).
+    OnError(OnFailedToCreateBook).
+    Monitor(MonitorBookCreation).
+    Audit(AuditBookCreation))
 ...
 
 }
